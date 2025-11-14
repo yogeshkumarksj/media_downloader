@@ -1,6 +1,5 @@
 fastapi
 uvicorn
 python-telegram-bot==21.4
-yt-dlp
 httpx
-pydantic
+ytdl-patched
