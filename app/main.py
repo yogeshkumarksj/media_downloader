@@ -52,7 +52,7 @@ WEBHOOK_URL = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}{WEBHOOK_PAT
 # ================
 # CREATE COOKIE FILE
 # ================
-COOKIE_PATH = "/app/cookies/cookie_youtube.txt"
+COOKIE_PATH =YOUTUBE_COOKIE_TEXT
 os.makedirs("/app/cookies", exist_ok=True)
 
 with open(COOKIE_PATH, "w", encoding="utf-8") as f:
