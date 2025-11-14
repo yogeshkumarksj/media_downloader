@@ -8,7 +8,7 @@ from telegram.ext import (
     Application, CommandHandler, MessageHandler,
     CallbackQueryHandler, filters, ContextTypes
 )
-import ytdl_patched as yt_dlp
+import yt_dlp_patched as yt_dlp
 import traceback
 
 
