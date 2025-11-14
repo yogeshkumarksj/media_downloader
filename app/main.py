@@ -11,6 +11,10 @@ from telegram.ext import (
 import yt_dlp
 import traceback
 
+
+# ==========================
+#  FULL YOUTUBE COOKIE TEXT
+# ==========================
 YOUTUBE_COOKIE_TEXT = """
 # Netscape HTTP Cookie File
 # http://curl.haxx.se/rfc/cookie_spec.html
@@ -25,66 +29,49 @@ YOUTUBE_COOKIE_TEXT = """
 .youtube.com	TRUE	/	FALSE	1797335911	SID	g.a0003Qi2f26WBp2Udqb-BcHxMvW1NuQdqX4bdj52opy16EesgS2nLUhHAWd17QRD6f2oYQVLYAACgYKAcESARESFQHGX2Mifwi1j5ZMlbdBpzmSNTbowhoVAUF8yKrUnnyEMCFjRKqQW0i_Wgu90076
 .youtube.com	TRUE	/	TRUE	1797335911	__Secure-1PSID	g.a0003Qi2f26WBp2Udqb-BcHxMvW1NuQdqX4bdj52opy16EesgS2nqkz-BIUTC3GPBUAyUtGIwgACgYKAaMSARESFQHGX2MiC8Rk_bMBniY_NQH-q7houxoVAUF8yKoR0mlApZB0C3lUL_yMarOt0076
 .youtube.com	TRUE	/	TRUE	1797335911	__Secure-3PSID	g.a0003Qi2f26WBp2Udqb-BcHxMvW1NuQdqX4bdj52opy16EesgS2nWS0RLiyD2sbuMlOXi5Gi3gACgYKAc8SARESFQHGX2Mi67H4O6SJhZ8FspLJhqR0TRoVAUF8yKrHFGBbdMXvrhN3fZRdyIIq0076
-...
-(baaki pura cookies yahan paste karo)
 """
-
-
 
 logging.basicConfig(level=logging.INFO)
 
-# Telegram Bot Token
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 WEBHOOK_PATH = f"/{BOT_TOKEN}"
 WEBHOOK_URL = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}{WEBHOOK_PATH}"
 
-# COOKIES (YOUR FILE NAME)
+# ================
+# CREATE COOKIE FILE
+# ================
 COOKIE_PATH = "/app/cookies/cookie_youtube.txt"
-
 os.makedirs("/app/cookies", exist_ok=True)
 
 with open(COOKIE_PATH, "w", encoding="utf-8") as f:
     f.write(YOUTUBE_COOKIE_TEXT)
 
 
-# Telegram Application
+# Telegram App
 ptb_app = Application.builder().token(BOT_TOKEN).build()
 
 
-# ------------------------------------------------------------
 # /start
-# ------------------------------------------------------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Send any video link (YouTube, Instagram, TikTok, Facebook).")
 
 
-# ------------------------------------------------------------
-# Handle URL message
-# ------------------------------------------------------------
+# Handle URL
 async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
     url = update.message.text
 
-    # Metadata extraction options
     ydl_opts_meta = {
         "quiet": True,
         "skip_download": True,
-        "cookies": YOUTUBE_COOKIES,
-
+        "cookies": COOKIE_PATH,
         "http_headers": {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/126.0 Safari/537.36"
-            ),
-            "Accept-Language": "en-US,en;q=0.9",
+            )
         },
-
-        # Enable JS player compatibility
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["web", "android"]
-            }
-        }
+        "extractor_args": {"youtube": {"player_client": ["web", "android"]}},
     }
 
     try:
@@ -101,25 +88,18 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data["url"] = url
 
-    keyboard = [
-        [InlineKeyboardButton("📥 Download MP4", callback_data="dl")]
-    ]
-
     await update.message.reply_photo(
         photo=thumbnail,
         caption=f"📌 *{title}*\n🎬 Platform: {platform}",
-        reply_markup=InlineKeyboardMarkup(keyboard),
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📥 Download MP4", callback_data="dl")]]),
         parse_mode="Markdown"
     )
 
 
-# ------------------------------------------------------------
-# Handle button click (Download)
-# ------------------------------------------------------------
+# Download button
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-
     url = context.user_data["url"]
 
     await query.edit_message_caption("⏳ Downloading… Please wait...")
@@ -128,27 +108,20 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "format": "bestvideo+bestaudio/best",
         "merge_output_format": "mp4",
         "outtmpl": "/tmp/%(title)s.%(ext)s",
-        "cookies": YOUTUBE_COOKIES,
-
+        "cookies": COOKIE_PATH,
         "http_headers": {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/126.0 Safari/537.36"
             )
-        },
-        "retries": 10,
+        }
     }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             file_path = ydl.prepare_filename(info)
-
-        # Telegram limit 50MB
-        if os.path.getsize(file_path) > 50 * 1024 * 1024:
-            await query.message.reply_text("❌ File too large for Telegram (>50MB).")
-            return
 
         with open(file_path, "rb") as f:
             await query.message.reply_video(video=f)
@@ -160,9 +133,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text("❌ Download failed. Try another link.")
 
 
-# ------------------------------------------------------------
-# Webhook settings
-# ------------------------------------------------------------
+# Webhook
 ptb_app.add_handler(CommandHandler("start", start))
 ptb_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_url))
 ptb_app.add_handler(CallbackQueryHandler(button))
@@ -177,14 +148,12 @@ async def lifespan(_: FastAPI):
         await ptb_app.stop()
 
 
-# FastAPI app
 app = FastAPI(lifespan=lifespan)
 
 
 @app.post(WEBHOOK_PATH)
 async def webhook_handler(request: Request):
-    data = await request.json()
-    update = Update.de_json(data, ptb_app.bot)
+    update = Update.de_json(await request.json(), ptb_app.bot)
     await ptb_app.process_update(update)
     return Response(status_code=HTTPStatus.OK)
 
