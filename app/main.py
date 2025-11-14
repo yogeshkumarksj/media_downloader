@@ -8,7 +8,7 @@ from telegram.ext import (
     Application, CommandHandler, MessageHandler,
     CallbackQueryHandler, filters, ContextTypes
 )
-import ytdl_patched as yt_dlp    #  <-- MAIN FIX (use patched version)
+import ytdl_patched as yt_dlp
 import traceback
 
 
@@ -23,18 +23,12 @@ WEBHOOK_URL = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}{WEBHOOK_PAT
 ptb_app = Application.builder().token(BOT_TOKEN).build()
 
 
-# ------------------------------------------------------------
-# /start
-# ------------------------------------------------------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Send any video link (YouTube, Instagram, TikTok, Facebook)."
     )
 
 
-# ------------------------------------------------------------
-# Handle URL message (metadata preview)
-# ------------------------------------------------------------
 async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
     url = update.message.text
 
@@ -68,7 +62,6 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data["url"] = url
 
-    # Buttons
     keyboard = [[InlineKeyboardButton("📥 Download MP4", callback_data="download")]]
 
     await update.message.reply_photo(
@@ -79,9 +72,6 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# ------------------------------------------------------------
-# Download button
-# ------------------------------------------------------------
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -102,7 +92,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             info = ydl.extract_info(url, download=True)
             file_path = ydl.prepare_filename(info)
 
-        # 50MB Telegram Limit
         if os.path.getsize(file_path) > 50 * 1024 * 1024:
             await query.message.reply_text("❌ File too large for Telegram (>50MB).")
             return
@@ -117,13 +106,11 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text("❌ Download failed. Try another link.")
 
 
-# Handlers
 ptb_app.add_handler(CommandHandler("start", start))
 ptb_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_url))
 ptb_app.add_handler(CallbackQueryHandler(button))
 
 
-# Webhook Lifespan
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await ptb_app.bot.set_webhook(WEBHOOK_URL)
@@ -133,7 +120,6 @@ async def lifespan(_: FastAPI):
         await ptb_app.stop()
 
 
-# FastAPI App
 app = FastAPI(lifespan=lifespan)
 
 
@@ -146,4 +132,4 @@ async def webhook_handler(request: Request):
 
 @app.get("/")
 def home():
-    return {"status": "Bot running with ytdl-patched"}
+    return {"status": "Bot running (ytdl-patched)"}
