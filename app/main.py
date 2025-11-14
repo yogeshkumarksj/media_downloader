@@ -11,6 +11,26 @@ from telegram.ext import (
 import yt_dlp
 import traceback
 
+YOUTUBE_COOKIE_TEXT = """
+# Netscape HTTP Cookie File
+# http://curl.haxx.se/rfc/cookie_spec.html
+# This is a generated file!  Do not edit.
+
+.youtube.com	TRUE	/	FALSE	1797335911	HSID	A4Qg7gnSQ6VsmSwAR
+.youtube.com	TRUE	/	TRUE	1797335911	SSID	AzK9_LWJPp46KiXR8
+.youtube.com	TRUE	/	FALSE	1797335911	APISID	S6_z30224ajUOUrn/ACEJVOiStb8uFEQ6i
+.youtube.com	TRUE	/	TRUE	1797335911	SAPISID	4Qh2lzrTgdVFgBeR/AMk1PKsojP7inNxoT
+.youtube.com	TRUE	/	TRUE	1797335911	__Secure-1PAPISID	4Qh2lzrTgdVFgBeR/AMk1PKsojP7inNxoT
+.youtube.com	TRUE	/	TRUE	1797335911	__Secure-3PAPISID	4Qh2lzrTgdVFgBeR/AMk1PKsojP7inNxoT
+.youtube.com	TRUE	/	FALSE	1797335911	SID	g.a0003Qi2f26WBp2Udqb-BcHxMvW1NuQdqX4bdj52opy16EesgS2nLUhHAWd17QRD6f2oYQVLYAACgYKAcESARESFQHGX2Mifwi1j5ZMlbdBpzmSNTbowhoVAUF8yKrUnnyEMCFjRKqQW0i_Wgu90076
+.youtube.com	TRUE	/	TRUE	1797335911	__Secure-1PSID	g.a0003Qi2f26WBp2Udqb-BcHxMvW1NuQdqX4bdj52opy16EesgS2nqkz-BIUTC3GPBUAyUtGIwgACgYKAaMSARESFQHGX2MiC8Rk_bMBniY_NQH-q7houxoVAUF8yKoR0mlApZB0C3lUL_yMarOt0076
+.youtube.com	TRUE	/	TRUE	1797335911	__Secure-3PSID	g.a0003Qi2f26WBp2Udqb-BcHxMvW1NuQdqX4bdj52opy16EesgS2nWS0RLiyD2sbuMlOXi5Gi3gACgYKAc8SARESFQHGX2Mi67H4O6SJhZ8FspLJhqR0TRoVAUF8yKrHFGBbdMXvrhN3fZRdyIIq0076
+...
+(baaki pura cookies yahan paste karo)
+"""
+
+
+
 logging.basicConfig(level=logging.INFO)
 
 # Telegram Bot Token
@@ -19,7 +39,13 @@ WEBHOOK_PATH = f"/{BOT_TOKEN}"
 WEBHOOK_URL = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}{WEBHOOK_PATH}"
 
 # COOKIES (YOUR FILE NAME)
-YOUTUBE_COOKIES = "/app/cookies/cookie_youtube.txt"
+COOKIE_PATH = "/app/cookies/cookie_youtube.txt"
+
+os.makedirs("/app/cookies", exist_ok=True)
+
+with open(COOKIE_PATH, "w", encoding="utf-8") as f:
+    f.write(YOUTUBE_COOKIE_TEXT)
+
 
 # Telegram Application
 ptb_app = Application.builder().token(BOT_TOKEN).build()
