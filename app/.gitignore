@@ -1,2 +1,25 @@
+# Ignore Python cache
 __pycache__/
 *.pyc
+
+# Ignore virtual environments
+venv/
+env/
+
+# Ignore cookie files (VERY IMPORTANT)
+app/cookies/*.txt
+*.cookies
+*.cookie
+cookies.txt
+
+# Ignore environment variables
+.env
+
+# Ignore temporary files
+*.log
+*.tmp
+*.swp
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
